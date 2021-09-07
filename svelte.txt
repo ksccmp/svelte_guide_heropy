@@ -1,0 +1,253 @@
+svelte 특징
+ 1. write less code
+  - 높은 가독성 유지
+  - 개발 시간 단축
+  - 쉬운 리팩토링
+  - 쉬운 디버깅
+  - 더 작은 번들
+  - 낮은 러닝 커브
+  
+ 2. no virtual DOM
+  - no dffing (이전의 가상돔과 업데이트가 이루어진 가상돔을 비교하는 행동)
+  - no overhead
+  - 빠른 성능 (가상돔을 사용하지 않기 때문에 메모리를 덜 사용해서 성능이 빨라짐)
+  
+ 3. truly reactive
+  - framework-less vanillaJS
+  - only use 'devDenpendencies' → svelte는 작업물을 vanillaJS로 변환하고 결과만 동작하기 떄문에 브라우저(런타임 단계)에서 동작하지 않는 컴파일러라고 할 수 있다.
+  - 명시적 설계 (창의적 작업)
+  
+  
+svelte 단점
+ 1. 낮은 성숙도 (작은 생태계)
+ 2. CDN 미제공
+ 3. IE 지원하지 않음
+ 
+ 
+
+
+svelte 프로젝트 초기 설정
+1. nodeJS 설치 (8버전 이상)
+2. npx degit sveltejs/template {프로젝트 명} (rollup 번들러를 이용)
+3. cd {프로젝트 명}
+4. npm install
+5. svelte파일에 코드 하이라이팅이 안되어 있다 → svelte for vs code 플러그인 설치
+
+
+
+
+
+
+scss 사용하기
+ 1. npm install -D svelte-preprocess node-sass
+ 2. rollup 설정
+  - import sveltePreprocess from 'svelte-preprocess';
+  - plugins: svelte 안에 preprocess: sveltePreprocess()
+ 3. style 태그에 lang="scss" 추가
+ 4. scss를 사용하는 style태그에 빨간 에러가 나올 경우
+  - extension의 svelte for vscode의 톱니바퀴 클릭
+  - extension settings 클릭
+  - Svelte > Language-server: Runtime이 비워져있을텐데 node.js설치 위치를 찾아서 입력 (ex, C:/Program Files/nodejs/node)
+  - 재시작
+  
+  
+  
+공급업체 접두사 처리
+ 1. npm install -D autoprefixer@^9 (svelte-preprocess 설정이 되어 있는 경우) (autoprefixer를 10버전 이상의 최신 버전으로 설치할 경우 postcss도 같이 설치)
+ 2. rollup 설정
+	// 전처리
+	preprocess: sveltePreprocess({
+		// 후처리
+		postcss: {
+			plugins: [
+				require('autoprefixer')()
+			]
+		}
+	})
+ 3. package.json 설정
+	  "browserslist": [
+		"> 1%", // 전 세계에서 사용되는 브라우저 점유율의 1% 이상인 브라우저에 모두 적용
+		"last 2 versions" // 각 브라우저들의 최신 2개의 버전만 적용
+	  ],
+	  
+	  
+	  
+	  
+경로 별칭하기
+ 1. npm install -D @rollup/plugin-alias
+ 2. rollup 설정
+	import alias from '@rollup/plugin-alias';
+	import path from 'path';
+	alias({
+		entries: [
+			{
+				find: '~',
+				replacement: path.resolve(__dirname, 'src/'),
+			}
+		]
+	}),
+	
+	
+	
+	
+lodash 사용하기
+ 1. npm install -D lodash
+ 2. 사용될 파일
+	import _find from 'lodash/find';
+	const foundList = _find($lists, { id: listId});
+	
+	
+	
+	
+sortablejs 사용하기
+ 1. npm install -D sortablejs;
+ 
+ 
+ 
+제품단계에서 콘솔출력 안나오게 하기
+ 1. npm install -D @rollup/plugin-strip
+ 2. rollup 설정
+	import strip from '@rollup/plugin-strip';
+	// 제품단계에서 로그 제거
+	production && strip({
+		include: '**/*.(svelte|js)',
+		// functions: ['console.*', 'assert.*'] // 기본값으로 명시되어 있음
+	}),
+	
+	
+	
+snowpack 프로젝트 생성
+ 1. npx degit snowpackjs/snowpack/create-snowpack-app/app-template-svelte {프로젝트 명}
+ 2. npm install
+ 
+ 
+ 
+ 
+snowpack을 이용한 핫 모듈 적용
+ 1. main.js파일에 다음과 같이 입력
+	// Hot Module Replacement (HMR) - Remove this snippet to remove HMR.
+	// Learn more: https://www.snowpack.dev/concepts/hot-module-replacement
+	if (import.meta.hot) {
+		import.meta.hot.accept();
+		import.meta.hot.dispose(() => {
+			app.$destroy();
+		});
+	}
+ 
+ 
+ 
+ 
+svelte에서 snowpack 사용환경 만들기
+ 1. npm init -y
+ 2. package.json 수정
+	"scripts": {
+		"dev": "snowpack dev",
+		"build": "snowpack build",
+	}
+ 3. npm install -D snowpack svelte @snowpack/plugin-svelte @snowpack/plugin-dotenv
+ 4. snowpack.config.mjs 생성
+	export default {
+		mount: {
+		  public: {url: '/', static: true},
+		  src: {url: '/dist'},
+		},
+		plugins: ['@snowpack/plugin-svelte', '@snowpack/plugin-dotenv'],
+		routes: [
+		  /* Example: Enable an SPA Fallback in development: */
+		  // {"match": "routes", "src": ".*", "dest": "/index.html"},
+		],
+		optimize: {
+		  /* Example: Bundle your final build: */
+		  // "bundle": true,
+		},
+		packageOptions: {
+		  /* ... */
+		},
+		devOptions: {
+		  /* ... */
+		},
+		buildOptions: {
+		  /* ... */
+		},
+	  };
+
+
+
+
+
+snowpack에서 preprocess 등록
+ 1. snkowpack.config.mjs 수정
+	import sveltePreprocess from 'svelte-preprocess';
+	import autoprefixer from 'autoprefixer';
+	['@snowpack/plugin-svelte', {
+		preprocess: sveltePreprocess({
+			// scss로 style된 모든 곳에 main.scss를 적용시키기
+			scss: {
+				prependData: '@import "./src/scss/main.scss";'
+			},
+			// 후처리
+			postcss: {
+				plugins: [
+					autoprefixer()
+				]
+			}
+		})
+	}]
+	
+	
+	
+	
+	
+snowpack에서 scss 사용 (node-sass 대체)
+ 1. npm install -D @snowpack/plugin-sass
+ 2. snowpack.config.mjs 수정
+	plugins: [
+        '@snowpack/plugin-sass'
+    ],
+	
+	
+	
+	
+snowpack에서 제품모드에서 콘솔 출력 방지하기
+ 1. npm install -D @snowpack/plugin-babel babel-plugin-transform-remove-console
+ 2. snowpack.config.mjs 수정
+	const babelOptions = () => {
+		return {
+			plugins: production ? ['transform-remove-console'] : [],
+		}
+	}
+	
+	plugins: [
+        ['@snowpack/plugin-svelte', {
+            preprocess: sveltePreprocess({
+                // svelte파일에서 콘솔 제거 등록
+                babel: babelOptions(),
+			})
+        }],
+        ['@snowpack/plugin-babel', {
+            transformOptions: babelOptions(),
+        }],
+	]
+	
+	
+	
+
+snowpack에서 앨리어스 설정
+ 1. snowpack.config.mjs 수정
+	export defulat {
+		alias: {
+			'~': './src'
+		},
+	}
+	
+	
+	
+	
+	
+snowpack에서 최소화를 통한 난독화 기능 추가 (rollup의 terser 대체)
+ 1. npm install -D @snowpack/plugin-optimize
+ 2. snowpack.config.mjs 수정
+	// 제품모드일때 자동으로 난독화 및 압축
+	plugins: [
+		'@snowpack/plugin-optimize',
+	]
